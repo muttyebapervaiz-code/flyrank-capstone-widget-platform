@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Customer Website</title>
+</head>
+<body>
+    <h1>Yeh ek dummy customer ki website hai</h1>
+    <p>Neeche humara widget test ho raha hai:</p>
+
+    <div id="widget-container">
+        <input type="email" id="email" placeholder="Apna email likho">
+        <button onclick="submitForm()">Subscribe</button>
+        <p id="result"></p>
+    </div>
+
+    <script>
+        async function submitForm() {
+            const email = document.getElementById('email').value;
+            const response = await fetch('http://127.0.0.1:8000/submissions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    widget_id: 'a1ea8b9d-a0bf-4bee-86b8-e925f2ecfc9f',
+                    data: { email: email }
+                })
+            });
+            const result = await response.json();
+            document.getElementById('result').innerText = JSON.stringify(result);
+        }
+    </script>
+</body>
+</html>
