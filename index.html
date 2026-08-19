@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WidgetHive — Embed anywhere, capture everywhere</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="logo">Widget<span>Hive</span></div>
+    <div class="nav-links">
+      <a href="#" onclick="showLogin()">Login</a>
+    </div>
+  </nav>
+
+  <section class="hero" id="hero-section">
+    <div>
+      <h1>One line of script.<br>Widgets, everywhere.</h1>
+      <p>Build a signup form, contact form, or popup — get an embed code in one click, paste it on any website. Data is safe, spam-filtered, and validated.</p>
+      <button class="btn btn-primary" onclick="showSignup()">Get started for free</button>
+    </div>
+    <div class="mock-browser">
+      <div class="mock-browser-bar">
+        <div class="mock-dot"></div>
+        <div class="mock-dot"></div>
+        <div class="mock-dot"></div>
+      </div>
+      <div class="mock-browser-body">
+        <div class="widget-type-tag">Contact Form</div>
+        <h3>Get in touch</h3>
+        <p style="color:#6B7280; font-size:14px; margin:8px 0 16px;">We reply within 24 hours</p>
+        <div class="form-group"><input placeholder="Your name" disabled></div>
+        <div class="form-group"><input placeholder="Email address" disabled></div>
+        <button class="btn btn-primary" style="width:100%;" disabled>Send Message</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOGIN FORM -->
+  <div class="auth-card hidden" id="login-card">
+    <h2 style="margin-bottom:20px;">Log in</h2>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="you@example.com">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary" style="width:100%;" onclick="handleLogin()">Log in</button>
+    <p class="error-msg hidden" id="login-error"></p>
+    <p style="margin-top:16px; font-size:14px;">Don't have an account? <a href="#" onclick="showSignup()">Sign up</a></p>
+  </div>
+
+  <!-- SIGNUP FORM -->
+  <div class="auth-card hidden" id="signup-card">
+    <h2 style="margin-bottom:20px;">Create your account</h2>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="signup-email" placeholder="you@example.com">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="signup-password" placeholder="At least 6 characters">
+    </div>
+    <button class="btn btn-primary" style="width:100%;" onclick="handleSignup()">Create account</button>
+    <p class="error-msg hidden" id="signup-error"></p>
+    <p style="margin-top:16px; font-size:14px;">Already have an account? <a href="#" onclick="showLogin()">Log in</a></p>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    if (isLoggedIn()) window.location.href = "dashboard.html";
+
+    function showLogin() {
+      document.getElementById("hero-section").classList.add("hidden");
+      document.getElementById("signup-card").classList.add("hidden");
+      document.getElementById("login-card").classList.remove("hidden");
+    }
+    function showSignup() {
+      document.getElementById("hero-section").classList.add("hidden");
+      document.getElementById("login-card").classList.add("hidden");
+      document.getElementById("signup-card").classList.remove("hidden");
+    }
+
+    async function handleLogin() {
+      const email = document.getElementById("login-email").value;
+      const password = document.getElementById("login-password").value;
+      const errorEl = document.getElementById("login-error");
+      try {
+        await login(email, password);
+        window.location.href = "dashboard.html";
+      } catch (err) {
+        errorEl.innerText = err.message;
+        errorEl.classList.remove("hidden");
+      }
+    }
+
+    async function handleSignup() {
+      const email = document.getElementById("signup-email").value;
+      const password = document.getElementById("signup-password").value;
+      const errorEl = document.getElementById("signup-error");
+      try {
+        await signup(email, password);
+        window.location.href = "dashboard.html";
+      } catch (err) {
+        errorEl.innerText = err.message;
+        errorEl.classList.remove("hidden");
+      }
+    }
+  </script>
+</body>
+</html>
