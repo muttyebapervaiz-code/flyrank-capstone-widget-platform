@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard — WidgetHive</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="logo">Widget<span>Hive</span></div>
+    <div class="nav-links">
+      <a href="#" onclick="logout()">Logout</a>
+    </div>
+  </nav>
+
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <a href="#" class="sidebar-item active" onclick="showView('list')">My Widgets</a>
+      <a href="#" class="sidebar-item" onclick="showView('create')">+ New Widget</a>
+    </aside>
+
+    <main class="main-content">
+
+      <!-- WIDGET LIST VIEW -->
+      <div id="view-list">
+        <h2 style="margin-bottom:20px;">My Widgets</h2>
+        <div id="widgets-container">
+          <p style="color:#6B7280;">Loading...</p>
+        </div>
+      </div>
+
+      <!-- CREATE WIDGET VIEW -->
+      <div id="view-create" class="hidden">
+        <h2 style="margin-bottom:20px;">Create a New Widget</h2>
+        <div class="form-group">
+          <label>Widget Type</label>
+          <select id="widget-type">
+            <option value="newsletter_signup">Newsletter Signup</option>
+            <option value="contact_form">Contact Form</option>
+            <option value="promo_popup">Promo / Discount Popup</option>
+            <option value="event_rsvp">Event / Webinar RSVP</option>
+            <option value="feedback_widget">Feedback Widget</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" id="widget-title" placeholder="e.g. Subscribe to our updates">
+        </div>
+        <div class="form-group">
+          <label>Description (optional)</label>
+          <input type="text" id="widget-description" placeholder="e.g. Get weekly tips in your inbox">
+        </div>
+        <div class="form-group">
+          <label>Fields (select the ones you need)</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" value="name"> Name</label>
+            <label><input type="checkbox" value="email" checked> Email</label>
+            <label><input type="checkbox" value="phone"> Phone</label>
+            <label><input type="checkbox" value="message"> Message</label>
+            <label><input type="checkbox" value="company"> Company</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Button Text</label>
+          <input type="text" id="widget-button-text" placeholder="e.g. Subscribe">
+        </div>
+        <button class="btn btn-primary" onclick="handleCreateWidget()">Create Widget</button>
+        <p class="error-msg hidden" id="create-error"></p>
+      </div>
+
+      <!-- WIDGET DETAIL VIEW -->
+      <div id="view-detail" class="hidden">
+        <a href="#" onclick="showView('list')" style="font-size:14px;">&larr; Back to widgets</a>
+        <h2 id="detail-title" style="margin:12px 0 20px;"></h2>
+
+        <h3 style="margin-bottom:10px; font-size:15px;">Live Preview — this is exactly what visitors will see</h3>
+        <div class="mock-browser" style="margin-bottom:32px;">
+          <div class="mock-browser-bar">
+            <div class="mock-dot"></div>
+            <div class="mock-dot"></div>
+            <div class="mock-dot"></div>
+          </div>
+          <div class="mock-browser-body" id="live-preview-container">
+            <p style="color:#6B7280;">Loading preview...</p>
+          </div>
+        </div>
+
+        <h3 style="margin-bottom:10px; font-size:15px;">Embed Code — paste this into your website</h3>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyEmbedCode()">Copy</button>
+          <code id="embed-code-text">loading...</code>
+        </div>
+
+        <div class="stats-grid" style="margin-top:32px;">
+          <div class="stat-box">
+            <div class="number" id="stat-total">0</div>
+            <div class="label">Total Submissions</div>
+          </div>
+          <div class="stat-box">
+            <div class="number" id="stat-genuine">0</div>
+            <div class="label">Genuine</div>
+          </div>
+          <div class="stat-box">
+            <div class="number" id="stat-spam">0</div>
+            <div class="label">Spam Blocked</div>
+          </div>
+        </div>
+
+        <h3 style="margin-bottom:12px; font-size:15px;">Submissions</h3>
+        <div id="submissions-container"></div>
+
+        <button class="btn btn-danger" style="margin-top:24px;" onclick="handleDeleteWidget()">Delete Widget</button>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    if (!isLoggedIn()) window.location.href = "index.html";
+
+    let currentWidgetId = null;
+
+    function showView(view) {
+      document.getElementById("view-list").classList.add("hidden");
+      document.getElementById("view-create").classList.add("hidden");
+      document.getElementById("view-detail").classList.add("hidden");
+      document.getElementById("view-" + view).classList.remove("hidden");
+
+      document.querySelectorAll(".sidebar-item").forEach(el => el.classList.remove("active"));
+      if (view === "list") { loadWidgets(); document.querySelectorAll(".sidebar-item")[0].classList.add("active"); }
+      if (view === "create") document.querySelectorAll(".sidebar-item")[1].classList.add("active");
+    }
+
+    async function loadWidgets() {
+      const container = document.getElementById("widgets-container");
+      const widgets = await getWidgets();
+      if (widgets.length === 0) {
+        container.innerHTML = `<p style="color:#6B7280;">You haven't created a widget yet. Click "+ New Widget" to get started.</p>`;
+        return;
+      }
+      container.innerHTML = widgets.map(w => `
+        <div class="widget-card">
+          <div class="widget-card-info">
+            <div class="widget-type-tag">${w.widget_type.replace('_', ' ')}</div>
+            <h3>${w.title}</h3>
+            <p style="color:#6B7280; font-size:13px;">${w.fields.join(', ')}</p>
+          </div>
+          <button class="btn btn-outline" onclick="openWidgetDetail('${w.id}', '${w.title}')">View</button>
+        </div>
+      `).join('');
+    }
+
+    async function handleCreateWidget() {
+      const fields = Array.from(document.querySelectorAll('.checkbox-group input:checked')).map(el => el.value);
+      const errorEl = document.getElementById("create-error");
+      try {
+        await createWidget({
+          widget_type: document.getElementById("widget-type").value,
+          title: document.getElementById("widget-title").value,
+          description: document.getElementById("widget-description").value || null,
+          fields: fields,
+          button_text: document.getElementById("widget-button-text").value,
+        });
+        showView('list');
+      } catch (err) {
+        errorEl.innerText = "Please fill in all fields correctly (title and button text are required).";
+        errorEl.classList.remove("hidden");
+      }
+    }
+
+    async function openWidgetDetail(widgetId, title) {
+      currentWidgetId = widgetId;
+      document.getElementById("view-list").classList.add("hidden");
+      document.getElementById("view-create").classList.add("hidden");
+      document.getElementById("view-detail").classList.remove("hidden");
+      document.getElementById("detail-title").innerText = title;
+
+      // Live preview: load the actual widget.js script into the preview box
+      const previewBox = document.getElementById("live-preview-container");
+      previewBox.innerHTML = "";
+      const script = document.createElement("script");
+      script.src = `${API_BASE}/widget.js?id=${widgetId}&t=${Date.now()}`;
+      previewBox.appendChild(script);
+
+      const embed = await getEmbedCode(widgetId);
+      document.getElementById("embed-code-text").innerText = embed.embed_code;
+
+      const stats = await getWidgetStats(widgetId);
+      document.getElementById("stat-total").innerText = stats.total_submissions;
+      document.getElementById("stat-genuine").innerText = stats.genuine_count;
+      document.getElementById("stat-spam").innerText = stats.spam_count;
+
+      const submissions = await getWidgetSubmissions(widgetId);
+      const subContainer = document.getElementById("submissions-container");
+      if (submissions.length === 0) {
+        subContainer.innerHTML = `<p style="color:#6B7280;">No submissions yet.</p>`;
+      } else {
+        subContainer.innerHTML = submissions.map(s => `
+          <div class="submission-row">
+            ${Object.entries(s.data).map(([k,v]) => `<strong>${k}:</strong> ${v}`).join(' &nbsp; ')}
+            ${s.country ? ` &nbsp; 📍 ${s.city || ''}, ${s.country}` : ''}
+            ${s.is_spam ? '<span class="spam-badge">SPAM</span>' : ''}
+          </div>
+        `).join('');
+      }
+    }
+
+    function copyEmbedCode() {
+      const text = document.getElementById("embed-code-text").innerText;
+      navigator.clipboard.writeText(text);
+      alert("Copied to clipboard!");
+    }
+
+    async function handleDeleteWidget() {
+      if (!confirm("Are you sure you want to delete this widget?")) return;
+      await deleteWidget(currentWidgetId);
+      showView('list');
+    }
+
+    showView('list');
+  </script>
+</body>
+</html>
